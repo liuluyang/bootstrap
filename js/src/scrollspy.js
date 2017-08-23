@@ -3,7 +3,7 @@ import Util from './util'
 
 /**
  * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0-alpha.6): scrollspy.js
+ * Bootstrap (v4.0.0-beta): scrollspy.js
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * --------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@ const ScrollSpy = (($) => {
    */
 
   const NAME               = 'scrollspy'
-  const VERSION            = '4.0.0-alpha.6'
+  const VERSION            = '4.0.0-beta'
   const DATA_KEY           = 'bs.scrollspy'
   const EVENT_KEY          = `.${DATA_KEY}`
   const DATA_API_KEY       = '.data-api'
@@ -45,18 +45,15 @@ const ScrollSpy = (($) => {
   const ClassName = {
     DROPDOWN_ITEM : 'dropdown-item',
     DROPDOWN_MENU : 'dropdown-menu',
-    NAV_LINK      : 'nav-link',
-    NAV           : 'nav',
     ACTIVE        : 'active'
   }
 
   const Selector = {
     DATA_SPY        : '[data-spy="scroll"]',
     ACTIVE          : '.active',
-    LIST_ITEM       : '.list-item',
-    LI              : 'li',
-    LI_DROPDOWN     : 'li.dropdown',
+    NAV_LIST_GROUP  : '.nav, .list-group',
     NAV_LINKS       : '.nav-link',
+    LIST_ITEMS      : '.list-group-item',
     DROPDOWN        : '.dropdown',
     DROPDOWN_ITEMS  : '.dropdown-item',
     DROPDOWN_TOGGLE : '.dropdown-toggle'
@@ -81,6 +78,7 @@ const ScrollSpy = (($) => {
       this._scrollElement = element.tagName === 'BODY' ? window : element
       this._config        = this._getConfig(config)
       this._selector      = `${this._config.target} ${Selector.NAV_LINKS},`
+                          + `${this._config.target} ${Selector.LIST_ITEMS},`
                           + `${this._config.target} ${Selector.DROPDOWN_ITEMS}`
       this._offsets       = []
       this._targets       = []
@@ -233,7 +231,7 @@ const ScrollSpy = (($) => {
       for (let i = this._offsets.length; i--;) {
         const isActiveTarget = this._activeTarget !== this._targets[i]
             && scrollTop >= this._offsets[i]
-            && (this._offsets[i + 1] === undefined ||
+            && (typeof this._offsets[i + 1] === 'undefined' ||
                 scrollTop < this._offsets[i + 1])
 
         if (isActiveTarget) {
@@ -248,6 +246,7 @@ const ScrollSpy = (($) => {
       this._clear()
 
       let queries = this._selector.split(',')
+      // eslint-disable-next-line arrow-body-style
       queries     = queries.map((selector) => {
         return `${selector}[data-target="${target}"],` +
                `${selector}[href="${target}"]`
@@ -259,9 +258,11 @@ const ScrollSpy = (($) => {
         $link.closest(Selector.DROPDOWN).find(Selector.DROPDOWN_TOGGLE).addClass(ClassName.ACTIVE)
         $link.addClass(ClassName.ACTIVE)
       } else {
-        // todo (fat) this is kinda sus...
-        // recursively add actives to tested nav-links
-        $link.parents(Selector.LI).find(`> ${Selector.NAV_LINKS}`).addClass(ClassName.ACTIVE)
+        // Set triggered link as active
+        $link.addClass(ClassName.ACTIVE)
+        // Set triggered links parents as active
+        // With both <ul> and <nav> markup a parent is the previous sibling of any nav ancestor
+        $link.parents(Selector.NAV_LIST_GROUP).prev(`${Selector.NAV_LINKS}, ${Selector.LIST_ITEMS}`).addClass(ClassName.ACTIVE)
       }
 
       $(this._scrollElement).trigger(Event.ACTIVATE, {
@@ -287,7 +288,7 @@ const ScrollSpy = (($) => {
         }
 
         if (typeof config === 'string') {
-          if (data[config] === undefined) {
+          if (typeof data[config] === 'undefined') {
             throw new Error(`No method named "${config}"`)
           }
           data[config]()
